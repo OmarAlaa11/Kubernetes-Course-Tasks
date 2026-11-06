@@ -1,1 +1,1 @@
-# Kubernetes-Course-Tasks
+From Containers to Production & AI Infrastructure
