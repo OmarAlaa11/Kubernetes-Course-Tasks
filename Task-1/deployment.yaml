@@ -1,0 +1,50 @@
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nginx-hello
+
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: nginx-hello
+  template:
+    metadata:
+      labels:
+        app: nginx-hello
+    spec:
+      shareProcessNamespace: true
+
+      initContainers:
+        - name: init-done
+          image: busybox
+          command: ["sh", "-c", "echo done"]
+
+      containers:
+        - name: nginx
+          image: nginx:alpine
+          ports:
+            - containerPort: 80
+          command: ["/bin/sh", "-c"]
+          args:
+            - |
+              echo "hello in MLOPS MENA COMMUNITY : $(date '+%Y-%m-%d %H:%M:%S')" > /usr/share/nginx/html/index.html
+              exec nginx -g 'daemon off;'
+
+        - name: time-updater
+          image: busybox
+          command: ["sh", "-c"]
+          args:
+            - |
+              while true; do
+                for f in /proc/[0-9]*/comm; do
+                  if [ "$(cat "$f" 2>/dev/null)" = "nginx" ]; then
+                    pid="${f#/proc/}"
+                    pid="${pid%/comm}"
+                    echo "hello in MLOPS MENA COMMUNITY : $(date '+%Y-%m-%d %H:%M:%S')" > "/proc/$pid/root/usr/share/nginx/html/index.html"
+                    break
+                  fi
+                done
+                sleep 5
+              done
